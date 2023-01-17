@@ -9,6 +9,7 @@ const UserSchema = new mongoose.Schema({
   name: String,
   email: String,
   role: { type: String, enum: ["Admin", "User"], default: "User" },
+  password: { type: String, default: "1234" },
   address: {
     country: String,
     city: String,
