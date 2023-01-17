@@ -2,7 +2,7 @@ const express = require("express");
 const path = require("path");
 const schema = require("./schema");
 const { graphqlHTTP } = require("express-graphql");
-const { UserModel } = require("./models");
+const { UserModel } = require("./schema/Models");
 const jwt = require("jsonwebtoken");
 
 function createApp() {

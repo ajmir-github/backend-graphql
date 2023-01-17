@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { PostModel, UserModel } = require("./models");
+const { PostModel, UserModel } = require("../schema/Models");
 
 const { applyMiddleware } = require("graphql-middleware");
 const {
