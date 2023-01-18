@@ -14,6 +14,10 @@ const UserSchema = new mongoose.Schema({
     country: String,
     city: String,
   },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const UserModel = mongoose.model(Collections.user, UserSchema);
@@ -26,9 +30,14 @@ const PostSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+
   userId: {
     type: mongoose.SchemaTypes.ObjectId,
     ref: Collections.user,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 const PostModel = mongoose.model(Collections.post, PostSchema);

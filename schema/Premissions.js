@@ -1,5 +1,5 @@
 const { rule, shield, chain, or, allow, deny } = require("graphql-shield");
-const { UserModel } = require("./Models");
+const { UserModel, PostModel } = require("./Models");
 const jwt = require("jsonwebtoken");
 
 // ------------------ Premissions
@@ -32,10 +32,21 @@ const isAdmin = rule({ cache: "contextual" })((parent, args, ctx, info) => {
   return ctx.user.role === "Admin";
 });
 
-const isOwer = rule({ cache: "contextual" })(
+const isOwerOfUser = rule({ cache: "contextual" })(
   async (parent, args, ctx, info) => {
     return (
       ctx.user._id.toString() === args.id ||
+      new Error("You are not the ower of this document!")
+    );
+  }
+);
+const isOwerOfPost = rule({ cache: "contextual" })(
+  async (parent, args, ctx, info) => {
+    const post = await PostModel.findById(args.id);
+    if (!post) return new Error("Post not found!");
+
+    return (
+      ctx.user._id.toString() === post.userId.toString() ||
       new Error("You are not the ower of this document!")
     );
   }
@@ -46,10 +57,16 @@ const permissions = shield(
   {
     Query: {
       "*": allow,
-      user: chain(isAuthenticated, or(isAdmin, isOwer)),
     },
     Mutation: {
-      "*": deny,
+      // ----- USERS
+      addUser: allow,
+      updateUser: chain(isAuthenticated, or(isAdmin, isOwerOfUser)),
+      deleteUser: chain(isAuthenticated, or(isAdmin, isOwerOfUser)),
+      // ----- POSTS
+      addPost: isAuthenticated,
+      updatePost: chain(isAuthenticated, or(isAdmin, isOwerOfPost)),
+      deletePost: chain(isAuthenticated, or(isAdmin, isOwerOfPost)),
     },
   },
   {

@@ -5,9 +5,27 @@ const {
   GraphQLNonNull,
   GraphQLObjectType,
   GraphQLString,
+  GraphQLInputObjectType,
+  GraphQLInt,
 } = require("graphql");
 const { PostModel, UserModel } = require("./Models");
 const { PostType, UserType } = require("./Types");
+
+const AddressInputType = new GraphQLInputObjectType({
+  name: "AddressInput",
+  fields: {
+    country: { type: GraphQLString },
+    city: { type: GraphQLString },
+  },
+});
+
+const UserRoleEnumType = new GraphQLEnumType({
+  name: "UserRoleEnum",
+  values: {
+    admin: { value: "Admin" },
+    user: { value: "User" },
+  },
+});
 
 module.exports = new GraphQLObjectType({
   name: "Mutation",
@@ -18,8 +36,7 @@ module.exports = new GraphQLObjectType({
       args: {
         name: { type: GraphQLNonNull(GraphQLString) },
         email: { type: GraphQLNonNull(GraphQLString) },
-        country: { type: GraphQLNonNull(GraphQLString) },
-        city: { type: GraphQLNonNull(GraphQLString) },
+        address: { type: GraphQLNonNull(AddressInputType) },
         role: {
           type: new GraphQLEnumType({
             name: "UserRole",
@@ -32,13 +49,7 @@ module.exports = new GraphQLObjectType({
         },
       },
       resolve(parent, args) {
-        const { name, email, country, city, role } = args;
-        const newUser = new UserModel({
-          name,
-          email,
-          address: { country, city },
-          role,
-        });
+        const newUser = new UserModel(args);
         return newUser.save();
       },
     },
@@ -48,34 +59,25 @@ module.exports = new GraphQLObjectType({
         id: { type: GraphQLNonNull(GraphQLID) },
         name: { type: GraphQLString },
         email: { type: GraphQLString },
-        country: { type: GraphQLString },
-        city: { type: GraphQLString },
+        address: { type: AddressInputType },
         role: {
-          type: new GraphQLEnumType({
-            name: "UserRoleA",
-            values: {
-              admin: { value: "Admin" },
-              user: { value: "User" },
-            },
-          }),
+          type: UserRoleEnumType,
           defaultValue: "User",
         },
       },
       resolve(parent, args) {
-        const { id, name, email, country, city, role } = args;
-        return UserModel.findByIdAndUpdate(
-          id,
-          {
-            name,
-            email,
-            ["address.country"]: country,
-            ["address.city"]: city,
-            role,
-          },
-          {
-            new: true, // return the updated doc
-          }
-        );
+        return UserModel.findByIdAndUpdate(id, args, {
+          new: true, // return the updated doc
+        });
+      },
+    },
+    deleteUser: {
+      type: UserType,
+      args: {
+        id: { type: GraphQLNonNull(GraphQLID) },
+      },
+      resolve(parent, args) {
+        return UserModel.findByIdAndRemove(id);
       },
     },
     // --------- POST
@@ -113,6 +115,15 @@ module.exports = new GraphQLObjectType({
             new: true, // return the updated doc
           }
         );
+      },
+    },
+    deletePost: {
+      type: PostType,
+      args: {
+        id: { type: GraphQLNonNull(GraphQLID) },
+      },
+      resolve(parent, args) {
+        return PostModel.findByIdAndRemove(id);
       },
     },
   },

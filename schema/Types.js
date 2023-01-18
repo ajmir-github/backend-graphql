@@ -3,8 +3,11 @@ const {
   GraphQLID,
   GraphQLString,
   GraphQLList,
+  GraphQLBoolean,
+  GraphQLScalarType,
 } = require("graphql");
 const { PostModel, UserModel } = require("./Models");
+const { DateType, AddressType, PublishedInputType } = require("./utils");
 
 const UserType = new GraphQLObjectType({
   name: "User",
@@ -13,22 +16,16 @@ const UserType = new GraphQLObjectType({
     name: { type: GraphQLString },
     email: { type: GraphQLString },
     role: { type: GraphQLString },
-    address: {
-      type: new GraphQLObjectType({
-        name: "Address",
-        fields: () => ({
-          country: { type: GraphQLString },
-          city: { type: GraphQLString },
-        }),
-        resolve(parent) {
-          return parent.address;
-        },
-      }),
-    },
+    address: { type: AddressType },
+    createdAt: { type: DateType },
     posts: {
       type: GraphQLList(PostType),
+      args: { published: { type: PublishedInputType, defaultValue: true } },
       resolve(parent, args) {
-        return PostModel.find({ userId: parent._id });
+        const findQuery = { userId: parent._id };
+        // Post Piblish Query
+        if (args.published !== -1) findQuery.published = args.published;
+        return PostModel.find(findQuery);
       },
     },
   }),
@@ -40,6 +37,8 @@ const PostType = new GraphQLObjectType({
     _id: { type: GraphQLID },
     title: { type: GraphQLString },
     body: { type: GraphQLString },
+    createdAt: { type: DateType },
+    published: { type: GraphQLBoolean },
     author: {
       type: UserType,
       resolve(parent, args) {
